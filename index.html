@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Design Summit 2026 – Org Chart</title>
+
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#000000" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Summit Org" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<link rel="icon" href="icons/icon-192.png" type="image/png" />
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+
+<!-- ============================== KIOSK ============================== -->
+<div class="screen" id="kioskScreen">
+  <header class="k-top">
+    <svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#000"/><path d="M24 13v22M13 24h22" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>
+    <div>
+      <div class="ttl" data-i18n="app.name">Design Summit 2026</div>
+      <div class="sub" data-i18n="app.tag">Team, skills &amp; responsibilities</div>
+    </div>
+    <div class="right">
+      <div class="langsw" role="group" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="de">DE</button>
+      </div>
+      <button class="iconbtn" id="btnLock" title="Admin" aria-label="Admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="11" width="17" height="10.5" rx="2.5"/><path d="M7.5 11V7.5a4.5 4.5 0 0 1 9 0V11"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="scrollarea k-body" id="kioskBody">
+
+    <!-- Schritt 1: Firma waehlen -->
+    <section id="kPick" class="k-hero hidden">
+      <div class="kick" data-i18n="k.kick">Design Summit 2026</div>
+      <h2 data-i18n="k.welcome">Welcome — please add yourself to the chart</h2>
+      <p data-i18n="k.pickCompany">Start by typing your company name.</p>
+      <div class="pickwrap">
+        <input type="text" id="kCompanyInput" autocomplete="off" autocorrect="off" spellcheck="false" data-i18n-ph="k.searchCompany" placeholder="Your company…" />
+        <div class="sugg" id="kSugg"></div>
+      </div>
+    </section>
+
+    <!-- Schritt 2: Formular + Team -->
+    <div id="kEnter" class="k-grid hidden">
+      <section class="card pad">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start">
+          <div style="flex:1 1 auto;min-width:0">
+            <h2 class="card-title" id="kFormTitle" data-i18n="k.formTitle">Your details</h2>
+            <div class="card-sub" data-i18n="k.formSub">Only the name is required — everything else helps us plan better.</div>
+          </div>
+          <div class="company-chip" id="kCompanyChip">
+            <span class="nm" id="kCompanyName">—</span>
+            <button type="button" id="kChangeCompany" data-i18n="k.change">Change</button>
+          </div>
+        </div>
+        <div id="kFormHost" style="margin-top:22px"></div>
+      </section>
+
+      <aside class="card pad">
+        <h2 class="card-title" data-i18n="k.team">Already on the team</h2>
+        <div class="card-sub" id="kTeamCount">—</div>
+        <div id="kTeamList"></div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="k-bar" id="kBar">
+    <span class="hint" id="kHint"></span>
+    <span class="spacer"></span>
+    <button class="btn btn-ghost" id="kReset" data-i18n="k.reset">Clear</button>
+    <button class="btn btn-blue btn-lg" id="kSubmit" data-i18n="k.submit">Add me to the team</button>
+  </div>
+</div>
+
+<!-- ============================== ADMIN ============================== -->
+<div class="screen hidden" id="adminScreen">
+  <header class="a-top">
+    <svg style="width:34px;height:34px;flex:0 0 auto" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#000"/><path d="M24 13v22M13 24h22" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>
+    <div class="ttl" data-i18n="a.title">Admin</div>
+    <div class="right">
+      <div class="langsw" role="group" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="de">DE</button>
+      </div>
+      <button class="btn btn-dark" id="btnHandOver" data-i18n="a.handOver">Hand over iPad</button>
+    </div>
+  </header>
+
+  <div class="scrollarea a-body">
+    <div class="a-inner">
+      <div class="notice bad hidden" id="storageWarn">
+        <b data-i18n="a.storageWarnTag">No storage</b>
+        <span data-i18n="a.storageWarnText">This browser blocks local storage (private mode?). Entries live only until the tab closes — export a JSON backup regularly.</span>
+      </div>
+      <div class="notice" id="saveInfo">
+        <b data-i18n="a.autosaveTag">Autosave</b>
+        <span><span data-i18n="a.autosaveText">All entries are stored on this iPad automatically.</span> <span id="lastSaved"></span></span>
+      </div>
+
+      <div class="card supplier-bar">
+        <span class="lbl" data-i18n="a.supplier">Supplier</span>
+        <select id="supplierSelect"></select>
+        <button class="btn btn-ghost btn-sm" id="btnRename" data-i18n="a.rename">Rename</button>
+        <button class="btn btn-danger btn-sm" id="btnDeleteSup" data-i18n="a.delete">Delete</button>
+        <span class="grow"></span>
+        <input type="text" id="newSupplierName" class="new-sup" data-i18n-ph="a.newSupplierPh" placeholder="New supplier…" />
+        <button class="btn btn-dark btn-sm" id="btnAddSupplier" data-i18n="a.add">+ Add</button>
+        <span class="pill-count" id="memberCount">0</span>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" id="tabMembers" data-i18n="a.tabMembers">Members</button>
+        <button class="tab" id="tabChart" data-i18n="a.tabChart">Org chart</button>
+        <button class="tab" id="tabData" data-i18n="a.tabData">Data &amp; settings</button>
+      </div>
+
+      <!-- ---- Members ---- -->
+      <div id="adminMembers">
+        <div class="grid2">
+          <div class="card pad">
+            <h2 class="card-title" id="aFormTitle" data-i18n="a.addMember">Add member</h2>
+            <div class="card-sub" data-i18n="a.addMemberSub">Person, categories and software</div>
+            <div id="aFormHost" style="margin-top:20px"></div>
+            <div style="display:flex;gap:12px;margin-top:24px">
+              <button class="btn btn-dark" id="aSubmit" data-i18n="a.saveMember">Save member</button>
+              <button class="btn btn-ghost" id="aReset" data-i18n="btn.cancel">Cancel</button>
+            </div>
+          </div>
+          <div class="card pad">
+            <h2 class="card-title" data-i18n="a.overview">Supplier overview</h2>
+            <div class="card-sub" data-i18n="a.overviewSub">All recorded people for the selected supplier</div>
+            <div id="aTeamList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---- Org chart ---- -->
+      <div id="adminChart" class="hidden">
+        <div class="card filterbar">
+          <div class="fl"><span class="lbl" data-i18n="a.fCat">Category</span><select id="filterCat"></select></div>
+          <div class="fl"><span class="lbl" data-i18n="a.fCad">CAD</span><select id="filterCad"></select></div>
+          <div class="fl"><span class="lbl" data-i18n="a.f2d">2D</span><select id="filter2d"></select></div>
+          <div class="fl"><span class="lbl" data-i18n="a.fSearch">Search</span><input type="search" id="filterSearch" data-i18n-ph="a.fSearchPh" placeholder="Name…" /></div>
+          <div class="fl zoomctl">
+            <span class="lbl" data-i18n="a.fView">View</span>
+            <div class="zoomrow">
+              <button class="zbtn" id="zoomOut" aria-label="Zoom out">−</button>
+              <span class="zpct" id="zoomPct">100%</span>
+              <button class="zbtn" id="zoomIn" aria-label="Zoom in">+</button>
+              <button class="btn btn-ghost btn-sm" id="zoomFit" data-i18n="a.fit">Fit</button>
+            </div>
+          </div>
+        </div>
+        <div class="card filterbar" style="padding:12px 16px">
+          <div class="legend">
+            <span><i class="sq lead"></i> <span data-i18n="legend.lead">Team leader</span></span>
+            <span><i class="sq cad"></i> <span data-i18n="legend.cad">CAD software</span></span>
+            <span><i class="sq twod"></i> <span data-i18n="legend.twod">2D software</span></span>
+            <span><i class="sq lang"></i> <span data-i18n="legend.lang">Languages</span></span>
+          </div>
+        </div>
+
+        <div class="card chart-shell" id="chartShell">
+          <div class="org-head">
+            <svg class="plus-ic" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#000"/><path d="M24 12v24M12 24h24" stroke="#fff" stroke-width="5.5" stroke-linecap="round"/></svg>
+            <span class="company-pill" id="companyPill">COMPANY</span>
+            <div class="org-blobs" aria-hidden="true">
+              <svg viewBox="0 0 40 48"><path d="M4 4 H36 L20 24 Z M4 44 H36 L20 24 Z" fill="#000"/></svg>
+              <svg viewBox="0 0 28 48"><circle cx="14" cy="13" r="12" fill="#000"/><circle cx="14" cy="35" r="12" fill="#000"/></svg>
+              <svg viewBox="0 0 48 28"><rect x="3" y="3" width="42" height="22" rx="11" fill="none" stroke="#000" stroke-width="4"/></svg>
+            </div>
+          </div>
+          <div class="org-sub" id="orgSub">ORGANISATION CHART · DESIGN DEPARTMENT</div>
+          <div class="org-rule"></div>
+          <div class="chart-scroll" id="chartScroll">
+            <div class="chart-stage" id="chartStage">
+              <div class="chart-inner" id="chartInner">
+                <svg class="chart-lines" id="chartLines"></svg>
+                <div id="chart"></div>
+              </div>
+            </div>
+          </div>
+          <div class="org-foot" aria-hidden="true">
+            <svg viewBox="0 0 28 48"><circle cx="14" cy="13" r="12" fill="#000"/><circle cx="14" cy="35" r="12" fill="#000"/></svg>
+            <svg viewBox="0 0 40 48"><path d="M4 4 H36 L20 24 Z M4 44 H36 L20 24 Z" fill="#000"/></svg>
+            <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#000"/><path d="M24 13v22M13 24h22" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---- Data & settings ---- -->
+      <div id="adminData" class="hidden">
+        <div class="card pad" style="margin-bottom:18px">
+          <h2 class="card-title" data-i18n="a.export">Export</h2>
+          <div class="setrow">
+            <div class="sl"><b data-i18n="a.excelT">Excel workbook</b><span data-i18n="a.excelS">One sheet with everything plus one sheet per supplier.</span></div>
+            <div class="sa"><button class="btn btn-ghost" id="btnExcel" data-i18n="a.excelB">Export Excel</button></div>
+          </div>
+          <div class="setrow">
+            <div class="sl"><b data-i18n="a.pdfT">Org chart as PDF</b><span data-i18n="a.pdfS">Current supplier, complete chart on a single page.</span></div>
+            <div class="sa"><button class="btn btn-blue" id="btnPdf" data-i18n="a.pdfB">Export PDF</button></div>
+          </div>
+          <div class="setrow">
+            <div class="sl"><b data-i18n="a.jsonT">JSON backup</b><span data-i18n="a.jsonS">Full state including all suppliers — can be re-imported and edited.</span></div>
+            <div class="sa">
+              <button class="btn btn-dark" id="btnSaveJson" data-i18n="a.jsonB">Save backup</button>
+              <button class="btn btn-ghost" id="btnForward" data-i18n="a.forwardB">Only this supplier</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card pad" style="margin-bottom:18px">
+          <h2 class="card-title" data-i18n="a.import">Import</h2>
+          <div class="setrow">
+            <div class="sl"><b data-i18n="a.impJsonT">JSON file</b><span data-i18n="a.impJsonS">Adds the suppliers from the file to the existing ones.</span></div>
+            <div class="sa"><button class="btn btn-ghost" id="btnImportJson" data-i18n="a.impJsonB">Import JSON</button></div>
+          </div>
+          <div class="setrow">
+            <div class="sl"><b data-i18n="a.impExcelT">Excel / CSV file</b><span data-i18n="a.impExcelS">Recognises German and English column headers.</span></div>
+            <div class="sa"><button class="btn btn-ghost" id="btnImportExcel" data-i18n="a.impExcelB">Import Excel</button></div>
+          </div>
+        </div>
+
+        <div class="card pad" style="margin-bottom:18px">
+          <h2 class="card-title" data-i18n="a.snapT">Restore points</h2>
+          <div class="card-sub" data-i18n="a.snapS">Automatically created on every app start and before every import. The five most recent are kept.</div>
+          <div class="snaplist" id="snapList"></div>
+        </div>
+
+        <div class="card pad">
+          <h2 class="card-title" data-i18n="a.settings">Settings</h2>
+          <div class="setrow">
+            <div class="sl"><b data-i18n="a.kioskT">Company selection in kiosk mode</b><span data-i18n="a.kioskS">“Free” lets each person pick their own company. “Locked” keeps the kiosk on the supplier selected above.</span></div>
+            <div class="sa">
+              <div class="seg" id="segKiosk">
+                <button type="button" data-kiosk="choose" data-i18n="a.kioskFree">Free</button>
+                <button type="button" data-kiosk="locked" data-i18n="a.kioskLocked">Locked</button>
+              </div>
+            </div>
+          </div>
+          <div class="setrow">
+            <div class="sl"><b data-i18n="a.pinT">Admin PIN</b><span data-i18n="a.pinS">Four digits. Protects exports, deletion and the org chart while the iPad is being passed around.</span></div>
+            <div class="sa"><button class="btn btn-ghost" id="btnChangePin" data-i18n="a.pinB">Change PIN</button></div>
+          </div>
+          <div class="setrow">
+            <div class="sl"><b data-i18n="a.wipeT">Delete all data</b><span data-i18n="a.wipeS">Removes every supplier and person from this iPad. Export a backup first.</span></div>
+            <div class="sa"><button class="btn btn-danger" id="btnWipe" data-i18n="a.wipeB">Reset app</button></div>
+          </div>
+          <div class="setrow">
+            <div class="sl"><b data-i18n="a.aboutT">Offline status</b><span id="swStatus"></span></div>
+            <div class="sa"><span class="lbl" id="verLabel"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== OVERLAYS ============================== -->
+<div class="overlay done hidden" id="doneOverlay">
+  <div class="sheet">
+    <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <h3 id="doneTitle">Thanks!</h3>
+    <p id="doneText"></p>
+    <div class="acts">
+      <button class="btn btn-ghost btn-lg" id="doneAnother" data-i18n="k.addAnother">Add someone else</button>
+      <button class="btn btn-dark btn-lg" id="doneFinish" data-i18n="k.finish">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="pinOverlay">
+  <div class="sheet" style="max-width:400px">
+    <h3 id="pinTitle" data-i18n="a.pinTitle">Enter PIN</h3>
+    <div class="pindots" id="pinDots"><i></i><i></i><i></i><i></i></div>
+    <div class="pinerr" id="pinErr"></div>
+    <div class="pinpad" id="pinPad">
+      <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+      <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+      <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+      <button type="button" data-k="x" aria-label="Cancel">✕</button><button type="button" data-k="0">0</button><button type="button" data-k="b" aria-label="Backspace">⌫</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="modal">
+  <div class="sheet">
+    <h3 id="modalTitle"></h3>
+    <p id="modalText"></p>
+    <div id="modalInputWrap" style="margin-top:20px" class="hidden">
+      <input type="text" id="modalInput" />
+    </div>
+    <div class="acts">
+      <button class="btn btn-ghost btn-lg" id="modalCancel"></button>
+      <button class="btn btn-dark btn-lg" id="modalOk"></button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<input type="file" id="fileInput" accept=".json,application/json" />
+<input type="file" id="excelInput" accept=".xlsx,.xls,.csv" />
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
