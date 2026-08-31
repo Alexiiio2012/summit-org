@@ -2,7 +2,7 @@
    Bei Aenderungen an einer der Dateien unten die CACHE-Version hochzaehlen. */
 "use strict";
 
-const CACHE = "summit-org-v1";
+const CACHE = "summit-org-v3";
 
 const ASSETS = [
   "./",

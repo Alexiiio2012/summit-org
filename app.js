@@ -128,6 +128,7 @@ const STR = {
   "legend.lang":     ["Languages", "Sprachen"],
   "chart.sub":       ["ORGANISATION CHART · DESIGN DEPARTMENT", "ORGANIGRAMM · DESIGN-ABTEILUNG"],
   "chart.role":      ["Team leader", "Teamleiter"],
+  "chart.noCat":     ["Special projects", "Sonderprojekte"],
 
   "a.autosaveTag":   ["Autosave", "Autosave"],
   "a.autosaveText":  ["All entries are stored on this iPad automatically.", "Alle Einträge werden automatisch auf diesem iPad gespeichert."],
@@ -176,7 +177,10 @@ const STR = {
   "a.wipeB":         ["Reset app", "App zurücksetzen"],
   "a.aboutT":        ["Offline status", "Offline-Status"],
   "a.swOn":          ["Ready — the app also works without internet.", "Bereit — die App funktioniert auch ohne Internet."],
-  "a.swOff":         ["Not active. Serve the folder over https or localhost, then reload once.", "Nicht aktiv. Ordner über https oder localhost ausliefern und einmal neu laden."],
+  "a.swOff":         ["Not active — the app needs internet. Serve the folder over https (or localhost), then reload once.", "Nicht aktiv — die App braucht Internet. Ordner über https (oder localhost) ausliefern und einmal neu laden."],
+  "a.swPending":     ["Files stored. Restart the app once, then offline mode is complete.", "Dateien abgelegt. App einmal neu starten, dann ist der Offline-Betrieb fertig."],
+  "a.swErr":         ["Offline setup FAILED — the app needs internet: {msg}", "Offline-Einrichtung FEHLGESCHLAGEN — die App braucht Internet: {msg}"],
+  "a.swWarnTag":     ["Not offline", "Nicht offline"],
 
   "c.delMemberT":    ["Delete person", "Person löschen"],
   "c.delMemberX":    ["Remove “{name}” from the list?", "„{name}“ von der Liste entfernen?"],
@@ -261,6 +265,8 @@ function defaultStore() {
 let store = defaultStore();
 let storageOK = true;
 let lastSavedAt = null;
+let swState = "off";     // off | pending | ready | error
+let swError = "";
 
 function lsGet(key) { try { return window.localStorage.getItem(key); } catch (e) { return null; } }
 function lsSet(key, val) { try { window.localStorage.setItem(key, val); return true; } catch (e) { return false; } }
@@ -1008,11 +1014,22 @@ function deleteSupplier() {
   }, t("btn.delete"));
 }
 
+function renderSwStatus() {
+  if (navigator.serviceWorker && navigator.serviceWorker.controller && swState !== "error") swState = "ready";
+  const msg = swState === "ready"   ? t("a.swOn")
+            : swState === "pending" ? t("a.swPending")
+            : swState === "error"   ? t("a.swErr", { msg: swError })
+            :                         t("a.swOff");
+  $("swStatus").textContent = msg;
+  const bad = (swState === "error" || swState === "off");
+  $("swWarn").classList.toggle("hidden", !bad);
+  $("swWarnText").textContent = msg;
+}
+
 function renderSettings() {
   document.querySelectorAll("#segKiosk button").forEach(b =>
     b.classList.toggle("on", b.dataset.kiosk === store.settings.kioskMode));
-  const on = !!navigator.serviceWorker && !!navigator.serviceWorker.controller;
-  $("swStatus").textContent = on ? t("a.swOn") : t("a.swOff");
+  renderSwStatus();
   $("verLabel").textContent = "v" + APP_VERSION;
 }
 
@@ -1180,6 +1197,38 @@ function companyNode(sup) {
   return on;
 }
 
+/* Jede Person wird ueber ihre ERSTE Kategorie einer Gruppe zugeordnet.
+   Wer keine Kategorie angegeben hat, landet in einer eigenen Sammelgruppe. */
+function primaryCategory(emp) {
+  const c = (emp.categories || []).filter(Boolean);
+  return c.length ? c[0] : null;
+}
+
+function buildGroups(sorted, lead) {
+  const map = new Map();
+  sorted.forEach(e => {
+    if (lead && e.id === lead.id) return;          // Teamleiter ist die Wurzel
+    const cat = primaryCategory(e);
+    const key = cat || " nocat";
+    if (!map.has(key)) map.set(key, { label: cat || t("chart.noCat"), isOther: !cat, members: [] });
+    map.get(key).members.push(e);
+  });
+  const all = [...map.values()];
+  return {
+    multi: all.filter(g => g.members.length > 1)
+      .sort((a, b) => b.members.length - a.members.length || a.label.localeCompare(b.label)),
+    singles: all.filter(g => g.members.length === 1)
+      .sort((a, b) => (a.isOther ? 1 : 0) - (b.isOther ? 1 : 0) || a.label.localeCompare(b.label))
+  };
+}
+
+function groupLabel(g) {
+  const d = el("div", "oc-label");
+  d.appendChild(document.createTextNode(g.label));
+  d.appendChild(el("span", "n", String(g.members.length)));
+  return d;
+}
+
 function renderChart() {
   const sup = curSup();
   const chart = $("chart");
@@ -1202,21 +1251,42 @@ function renderChart() {
   const sorted = sortedEmployees(sup);
   const lead = sorted.find(e => e.isLead) || null;
 
-  const ul = el("ul", "tree");
-  const rootLi = el("li");
-  rootLi.appendChild(lead ? empNode(lead, true, active) : companyNode(sup));
-  const kids = sorted.filter(e => !lead || e.id !== lead.id);
-  if (kids.length) {
-    const kidUl = document.createElement("ul");
-    kids.forEach(k => {
-      const li = el("li");
-      li.appendChild(empNode(k, false, active));
-      kidUl.appendChild(li);
-    });
-    rootLi.appendChild(kidUl);
+  const wrap = el("div", "ochart");
+
+  const rootBox = el("div", "oc-root");
+  rootBox.appendChild(lead ? empNode(lead, true, active) : companyNode(sup));
+  wrap.appendChild(rootBox);
+
+  const { multi, singles } = buildGroups(sorted, lead);
+  if (multi.length || singles.length) {
+    const groups = el("div", "oc-groups");
+    // Kategorien mit mehreren Personen: eigene Zeile, Mitglieder nebeneinander.
+    // Label und Mitglieder liegen als Paar direkt im Raster, damit alle Labels
+    // gleich breit werden und die Personen-Spalten bündig untereinander stehen.
+    if (multi.length) {
+      const grid = el("div", "oc-multi");
+      multi.forEach(g => {
+        grid.appendChild(groupLabel(g));
+        const mem = el("div", "oc-members");
+        g.members.forEach(m => mem.appendChild(empNode(m, false, active)));
+        grid.appendChild(mem);
+      });
+      groups.appendChild(grid);
+    }
+    // Kategorien mit genau einer Person: gemeinsam in eine Zeile, nebeneinander
+    if (singles.length) {
+      const row = el("div", "oc-singles");
+      singles.forEach(g => {
+        const cell = el("div", "oc-cell");
+        cell.appendChild(groupLabel(g));
+        cell.appendChild(empNode(g.members[0], false, active));
+        row.appendChild(cell);
+      });
+      groups.appendChild(row);
+    }
+    wrap.appendChild(groups);
   }
-  ul.appendChild(rootLi);
-  chart.appendChild(ul);
+  chart.appendChild(wrap);
   // Nach dem Layout messen. requestAnimationFrame wird im Hintergrund-Tab
   // gedrosselt, deshalb zusaetzlich ein Timer als Rueckfallebene.
   requestAnimationFrame(applyZoom);
@@ -1241,35 +1311,102 @@ function drawConnectors() {
     l.setAttribute("shape-rendering", "crispEdges");
     svg.appendChild(l);
   };
-  inner.querySelectorAll("li").forEach(li => {
-    const kidUl = Array.from(li.children).find(c => c.tagName === "UL");
-    if (!kidUl) return;
-    const pNode = Array.from(li.children).find(c => c.classList && c.classList.contains("onode"));
-    if (!pNode) return;
-    const kids = Array.from(kidUl.children)
-      .filter(c => c.tagName === "LI")
-      .map(c => Array.from(c.children).find(x => x.classList && x.classList.contains("onode")))
-      .filter(Boolean);
-    if (!kids.length) return;
-    const pr = pNode.getBoundingClientRect();
-    const px = pr.left - base.left + pr.width / 2, py = pr.bottom - base.top;
-    const cs = kids.map(k => {
-      const r = k.getBoundingClientRect();
-      return { x: r.left - base.left + r.width / 2, top: r.top - base.top };
-    });
-    const busY = py + (Math.min(...cs.map(c => c.top)) - py) / 2;
-    line(px, py, px, busY);
-    const xs = cs.map(c => c.x);
-    line(Math.min(px, ...xs), busY, Math.max(px, ...xs), busY);
-    cs.forEach(c => line(c.x, busY, c.x, c.top));
+  /* Rechteck eines Elements relativ zur Diagramm-Flaeche */
+  const R = e => {
+    const r = e.getBoundingClientRect();
+    return {
+      l: Math.round(r.left - base.left), t: Math.round(r.top - base.top),
+      r: Math.round(r.right - base.left), b: Math.round(r.bottom - base.top),
+      cx: Math.round(r.left - base.left + r.width / 2),
+      cy: Math.round(r.top - base.top + r.height / 2)
+    };
+  };
+
+  const chartEl = inner.querySelector(".ochart");
+  if (!chartEl) return;
+  const rootNode = chartEl.querySelector(".oc-root .onode");
+  const groups = chartEl.querySelector(".oc-groups");
+  if (!rootNode || !groups) return;
+
+  const gr = R(groups);
+  const spineX = gr.l + 11;          // senkrechter Strang links
+  const joinY = gr.t + 10;           // Hoehe, auf der die Wurzel andockt
+  const branches = [];               // Abzweige-Hoehen, bestimmen die Stranglaenge
+
+  // --- Zeilen mit mehreren Personen: Label links, Mitglieder nebeneinander ---
+  const grid = groups.querySelector(":scope > .oc-multi");
+  const multiLabels = grid ? Array.from(grid.children).filter(c => c.classList.contains("oc-label")) : [];
+  multiLabels.forEach(labelEl => {
+    const memEl = labelEl.nextElementSibling;
+    if (!memEl || !memEl.classList.contains("oc-members")) return;
+    const nodes = Array.from(memEl.children).filter(c => c.classList.contains("onode"));
+    if (!nodes.length) return;
+    const lab = R(labelEl);
+    const firstAv = R(nodes[0].querySelector(".avatar"));
+    const ly = lab.cy, ay = firstAv.cy;
+
+    line(spineX, ly, lab.l, ly);                       // Strang -> Label
+    if (Math.abs(ay - ly) > 2) {                       // kleine Stufe abfangen
+      const kx = lab.r + 12;
+      line(lab.r, ly, kx, ly);
+      line(kx, ly, kx, ay);
+      line(kx, ay, firstAv.l, ay);
+    } else {
+      line(lab.r, ay, firstAv.l, ay);                  // Label -> erste Person
+    }
+    for (let i = 1; i < nodes.length; i++) {           // Personen untereinander verketten
+      line(R(nodes[i - 1]).r, ay, R(nodes[i].querySelector(".avatar")).l, ay);
+    }
+    branches.push(ly);
   });
+
+  // --- Zeile mit den Einzel-Kategorien: Label oben, Person darunter ---
+  const sing = groups.querySelector(":scope > .oc-singles");
+  if (sing) {
+    const cells = Array.from(sing.querySelectorAll(":scope > .oc-cell"));
+    const busY = R(sing).t - 16;
+    const xs = [];
+    cells.forEach(cell => {
+      const labelEl = cell.querySelector(".oc-label");
+      const av = cell.querySelector(".onode .avatar");
+      if (!labelEl || !av) return;
+      // Senkrechte laeuft mittig durch den Avatar; hinter dem weissen Label
+      // ist sie verdeckt, dadurch entsteht die Kette Bus -> Label -> Person.
+      const x = R(av).cx;
+      xs.push(x);
+      line(x, busY, x, R(av).t);
+    });
+    if (xs.length) {
+      line(spineX, busY, Math.max(...xs), busY);
+      branches.push(busY);
+    }
+  }
+
+  // --- Wurzel an den Strang anbinden ---
+  if (branches.length) {
+    const rr = R(rootNode);
+    line(rr.cx, rr.b, rr.cx, joinY);
+    line(spineX, joinY, rr.cx, joinY);
+    line(spineX, joinY, spineX, Math.max(...branches));
+  }
 }
 
 function applyZoom() {
   const inner = $("chartInner"), stage = $("chartStage"), scroll = $("chartScroll");
   if (!inner || !stage || !scroll) return;
   inner.style.transform = "none";
-  if (!inner.querySelector(".onode")) { stage.style.width = ""; stage.style.height = ""; return; }
+  if (!inner.querySelector(".onode")) {
+    // Kein Diagramm, nur der Platzhalter. Der liegt absolut positioniert, also
+    // braucht die Buehne seine Hoehe – sonst rutscht die Fusszeile darueber.
+    const ph = inner.querySelector(".empty");
+    if (ph) {
+      stage.style.width = "100%";
+      stage.style.height = Math.ceil(ph.getBoundingClientRect().height) + "px";
+    } else {
+      stage.style.width = ""; stage.style.height = "";
+    }
+    return;
+  }
   drawConnectors();
   const natW = inner.scrollWidth, natH = inner.scrollHeight;
   if (!natW || !inner.offsetParent) return;
@@ -1711,8 +1848,28 @@ renderFilters();
 renderKiosk();
 if (!storageOK) setTimeout(() => toast(t("a.storageWarnText")), 900);
 
-if ("serviceWorker" in navigator && location.protocol !== "file:") {
+/* Offline-Einrichtung. Ein Fehlschlag darf NICHT stillschweigend passieren –
+   sonst haelt man die App fuer offlinefaehig, obwohl sie es nicht ist. */
+if (!("serviceWorker" in navigator) || location.protocol === "file:") {
+  swState = "off";
+} else {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").then(() => setTimeout(renderSettings, 500)).catch(() => {});
+    navigator.serviceWorker.register("sw.js").then(reg => {
+      const done = () => {
+        swState = navigator.serviceWorker.controller ? "ready" : "pending";
+        renderSwStatus();
+      };
+      if (reg.active) done();
+      navigator.serviceWorker.ready.then(done);
+      setTimeout(done, 1200);
+    }).catch(err => {
+      swState = "error";
+      // Browsermeldung ist "Failed to register ... with script ('URL'): GRUND" –
+      // nur der Grund ist fuer den Anwender brauchbar.
+      const raw = (err && err.message ? err.message : String(err));
+      const m = /\):\s*(.+)$/.exec(raw);
+      swError = (m ? m[1] : raw).trim().slice(0, 160);
+      renderSwStatus();
+    });
   });
 }

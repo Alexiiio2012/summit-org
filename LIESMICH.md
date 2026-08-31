@@ -136,11 +136,33 @@ bleibt die alte Version aktiv.
 
 ## 8. Organigramm-Logik
 
-- Wer **Teamleiter** angehakt hat, steht als Wurzel oben; alle anderen hängen
-  darunter. Sind mehrere Teamleiter erfasst, wird der erste zur Wurzel, die
-  weiteren behalten ihre Kennzeichnung als Teamleiter.
-- Ist **niemand** als Teamleiter markiert, bildet ein Firmenknoten die Wurzel,
-  damit das Diagramm zusammenhängend bleibt und nicht als lose Reihe zerfällt.
-- Filter blenden Nichttreffer aus (abgeblendet, nicht entfernt), damit die
-  Struktur erhalten bleibt.
+**Wurzel:** Wer **Teamleiter** angehakt hat, steht oben. Sind mehrere Teamleiter
+erfasst, wird der erste zur Wurzel, die anderen behalten ihre Kennzeichnung.
+Ist niemand markiert, bildet ein Firmenknoten die Wurzel, damit das Diagramm
+zusammenhängend bleibt.
+
+**Gruppierung:** Darunter wird nach Kategorien gruppiert. Maßgeblich ist die
+**erste** Kategorie einer Person – wer „DIY & Hardware · Toys" angegeben hat,
+erscheint unter DIY & HARDWARE. Die Zahl im schwarzen Kreis am Label ist die
+Personenzahl der Gruppe.
+
+- Kategorien mit **mehreren** Personen bekommen eine eigene Zeile: Label links,
+  alle Personen nebeneinander. Die Labels sind gleich breit, damit die
+  Personen-Spalten über alle Zeilen bündig untereinander stehen.
+- Kategorien mit **genau einer** Person stehen gemeinsam in der letzten Zeile
+  nebeneinander, jede mit ihrem Label darüber. Das hält das Diagramm kompakt.
+- Zeilen mit mehreren Personen kommen zuerst, nach Gruppengröße absteigend.
+
+**Ohne Kategorie:** Personen, die keine Kategorie angegeben haben, landen in
+einer Sammelgruppe mit dem Label **„Sonderprojekte"** (englisch *Special
+projects*). Das ist eine reine Beschriftung – sie sagt nur „keine Kategorie
+angegeben". Wenn dir eine andere Bezeichnung lieber ist, lässt sich das in
+`app.js` beim Schlüssel `chart.noCat` ändern.
+
+**Sonstiges:**
+
+- Filter blenden Nichttreffer ab, entfernen sie aber nicht – die Struktur und
+  die Gruppengrößen bleiben lesbar.
 - Zoomen über **+ / − / Einpassen** oder mit zwei Fingern direkt im Diagramm.
+  Bei vielen Kategorien wird das Diagramm breit; „Einpassen" holt es auf die
+  Bildschirmbreite, der PDF-Export bleibt davon unberührt und immer vollständig.

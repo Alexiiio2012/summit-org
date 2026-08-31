@@ -380,10 +380,40 @@ input::placeholder{color:#b3b3ba;font-weight:600}
 .chart-inner{position:absolute;top:0;left:0;width:max-content;transform-origin:top left}
 .chart-lines{position:absolute;top:0;left:0;pointer-events:none;z-index:0;overflow:visible}
 #chart{position:relative;z-index:1}
-.tree,.tree ul{list-style:none;margin:0;padding:0}
-.tree{display:flex;justify-content:center;gap:34px}
-.tree ul{display:flex;justify-content:center;gap:34px;padding-top:44px}
-.tree li{position:relative;text-align:center;padding:0}
+
+/* Aufbau: Wurzel oben, darunter je Kategorie eine Zeile.
+   Kategorien mit mehreren Personen bekommen eine eigene Zeile
+   (Label links, Mitglieder nebeneinander), Kategorien mit genau
+   einer Person stehen gemeinsam in der letzten Zeile nebeneinander.
+   Die Verbindungslinien zeichnet drawConnectors() als SVG darunter. */
+.ochart{display:flex;flex-direction:column;gap:34px}
+.oc-root{display:flex;justify-content:center}
+.oc-groups{display:flex;flex-direction:column;gap:44px;padding-left:32px}
+
+/* Raster: erste Spalte alle Labels (gleich breit), zweite Spalte die Personen.
+   Dadurch beginnen die Personen in jeder Zeile an derselben Kante. */
+.oc-multi{
+  display:grid;grid-template-columns:max-content max-content;
+  column-gap:36px;row-gap:44px;align-items:start;
+}
+.oc-members{display:flex;align-items:flex-start;gap:26px}
+
+.oc-singles{display:flex;align-items:flex-start;gap:44px}
+.oc-cell{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+
+.oc-label{
+  display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;
+  border:2.5px solid #000;border-radius:11px;background:#fff;
+  padding:5px 13px;font-size:12px;font-weight:800;letter-spacing:.14em;
+  text-transform:uppercase;color:#000;white-space:nowrap;
+  margin-top:12px;                     /* zentriert das Label auf den Avatar */
+}
+.oc-label .n{
+  width:19px;height:19px;border-radius:999px;background:#000;color:#fff;
+  font-size:11px;font-weight:800;letter-spacing:0;
+  display:grid;place-items:center;flex:0 0 auto;
+}
+.oc-cell .oc-label{margin-top:0}
 
 .onode{display:inline-flex;gap:13px;align-items:flex-start;text-align:left;vertical-align:top;transition:opacity .15s ease}
 .onode.dim{opacity:.26}
