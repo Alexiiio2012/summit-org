@@ -6,7 +6,7 @@
    ============================================================ */
 "use strict";
 
-const APP_VERSION = "1.0";
+const APP_VERSION = "1.1";
 const LS_KEY   = "summitOrg.state.v1";
 const LS_SNAP  = "summitOrg.snapshots.v1";
 const MAX_SNAP = 5;
