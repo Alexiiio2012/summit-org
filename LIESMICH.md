@@ -69,6 +69,11 @@ Offline-Betrieb prüfen.
      wenn nur eine Firma erfasst wird.
 4. Optional bestehende Daten laden: *Import → JSON* oder *Excel / CSV*.
    Die vorhandenen Dateien aus `L_Organigramm_TEST` passen dafür.
+
+   Steht ein Lieferant aus der Datei schon auf dem iPad, fragt die App nach:
+   **Zusammenführen** ergänzt nur die Personen, die noch fehlen (erkannt über
+   Name + E-Mail), **Abbrechen** importiert nichts. Dieselbe Datei zweimal
+   einzulesen verdoppelt die Daten also nicht mehr.
 5. **iPad weitergeben** antippen. Damit ist der Admin-Bereich wieder gesperrt.
 
 ---
@@ -87,6 +92,27 @@ Danach kommt eine Bestätigung mit „Weitere Person“ oder „Fertig“.
 - Oben rechts kann jede Person zwischen **EN** und **DE** umschalten.
   Vorgabe ist Englisch.
 
+**Die Felder im Formular:**
+
+| Feld | Pflicht | Inhalt |
+|------|---------|--------|
+| Name | ja | — |
+| E-Mail, Telefon | nein | E-Mail wird auf Plausibilität geprüft |
+| Core Categories / product groups | nein | Warengruppen. Die **erste** Angabe bestimmt die Gruppe im Organigramm |
+| Languages | nein | Vorauswahl German, English, Mandarin |
+| 3D Software | nein | Vorauswahl SolidWorks, Rhino 3D, KeyShot |
+| 2D Software | nein | Vorauswahl Adobe Photoshop, Illustrator, InDesign |
+| AI Software | nein | Vorauswahl Vizcom, Claude, ChatGPT, Google Gemini |
+| Team responsible | nein | Wer angehakt ist, steht im Organigramm oben |
+
+Jede Software-Zeile hat ein Freitextfeld: was dort eingetragen wird, landet im
+Pool und steht danach allen Personen und den Filtern zur Verfügung.
+
+> Intern heißt das 3D-Feld weiterhin `cad` (früher „CAD software"). Das ist
+> Absicht – nur die Beschriftung wurde geändert, damit ältere JSON-Sicherungen
+> und Excel-Dateien weiter passen. Der Excel-Import akzeptiert beide
+> Spaltenüberschriften, ebenso „Teamleiter" neben „Team responsible".
+
 ---
 
 ## 5. Speicherung
@@ -100,9 +126,17 @@ Trotzdem: Am Ende jedes Summit-Tages einmal *JSON-Sicherung → Sicherung speich
 und die Datei vom iPad wegschieben. Der Speicher hängt an Safari; wenn jemand die
 Website-Daten löscht oder die App vom Homescreen entfernt, ist der Stand weg.
 
-**Warnung im Admin-Bereich beachten:** Erscheint dort ein roter Hinweis
-„Kein Speicher“, läuft Safari im privaten Modus. Dann bestehen die Einträge nur
-bis zum Schließen des Tabs.
+**Rote Hinweise im Admin-Bereich beachten.** Es gibt zwei:
+
+- **„Kein Speicher“** – Safari läuft im privaten Modus. Die Einträge bestehen
+  nur bis zum Schließen des Tabs.
+- **„Speicher voll“** – der Platz auf dem iPad ist erschöpft und die letzten
+  Eingaben wurden **nicht** gespeichert. Sofort eine JSON-Sicherung exportieren,
+  danach alte Wiederherstellungspunkte oder nicht mehr benötigte Lieferanten
+  löschen.
+
+In beiden Fällen kommt zusätzlich eine Meldung unten am Bildschirm. Ein
+Speicherfehler bleibt nie stillschweigend.
 
 ---
 
@@ -111,7 +145,9 @@ bis zum Schließen des Tabs.
 Alles unter *Admin → Daten & Einstellungen*:
 
 - **Excel-Arbeitsmappe** – ein Blatt mit allen Lieferanten plus je ein Blatt pro
-  Lieferant. Diese Datei lässt sich unverändert wieder importieren.
+  Lieferant. Spalten: Lieferant, Name, E-Mail, Telefon, Team responsible,
+  Kategorien, 3D Software, 2D Software, AI Software, Sprachen. Diese Datei lässt
+  sich unverändert wieder importieren.
 - **Organigramm als PDF** – der aktuelle Lieferant, komplett auf einer Seite.
 - **JSON-Sicherung** – vollständiger Stand, für Backup und Weiterbearbeitung.
 
@@ -126,18 +162,19 @@ Der Service Worker liefert die Dateien aus seinem Cache aus. Nach einer Änderun
 an `index.html`, `app.css` oder `app.js` deshalb in `sw.js` die Zeile
 
 ```js
-const CACHE = "summit-org-v1";
+const CACHE = "summit-org-v4";
 ```
 
-hochzählen (`v2`, `v3`, …) und die App auf dem iPad zweimal starten. Ohne das
+hochzählen (`v5`, `v6`, …) und die App auf dem iPad zweimal starten. Ohne das
 bleibt die alte Version aktiv.
 
 ---
 
 ## 8. Organigramm-Logik
 
-**Wurzel:** Wer **Teamleiter** angehakt hat, steht oben. Sind mehrere Teamleiter
-erfasst, wird der erste zur Wurzel, die anderen behalten ihre Kennzeichnung.
+**Wurzel:** Wer **Team responsible** angehakt hat, steht oben. Sind mehrere
+Personen so markiert, wird die erste zur Wurzel, die anderen behalten ihre
+Kennzeichnung.
 Ist niemand markiert, bildet ein Firmenknoten die Wurzel, damit das Diagramm
 zusammenhängend bleibt.
 

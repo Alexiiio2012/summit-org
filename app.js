@@ -17,6 +17,7 @@ const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
 const DEFAULT_CATEGORIES = ["DIY & Hardware","Household","Pet Supplies","Kitchen","Furniture","Outdoor & Leisure","Stationery","Toys","Sports","Bags & Luggage","Decoration"];
 const DEFAULT_CAD        = ["SolidWorks","Rhino 3D","KeyShot"];
 const DEFAULT_2D         = ["Adobe Photoshop","Adobe Illustrator","Adobe InDesign"];
+const DEFAULT_AI         = ["Vizcom","Claude","ChatGPT","Google Gemini"];
 const DEFAULT_LANGUAGES  = ["German","English","Mandarin"];
 
 /* ============================================================
@@ -70,17 +71,19 @@ const STR = {
   "f.emailErr":      ["This email address looks incomplete.", "Diese E-Mail-Adresse sieht unvollständig aus."],
   "f.phone":         ["Company phone / mobile", "Firmen-Telefon / Mobil"],
   "f.phonePh":       ["+86 21 1234 5678", "+86 21 1234 5678"],
-  "f.cats":          ["Categories / product groups", "Kategorien / Warengruppen"],
+  "f.cats":          ["Core Categories / product groups", "Kern-Kategorien / Warengruppen"],
   "f.catsPh":        ["Add another category…", "Weitere Kategorie…"],
   "f.langs":         ["Languages", "Sprachen"],
   "f.langsPh":       ["Add another language…", "Weitere Sprache…"],
-  "f.cad":           ["CAD software", "CAD-Software"],
-  "f.cadPh":         ["Add more software…", "Weitere Software…"],
-  "f.twoD":          ["2D software", "2D-Software"],
-  "f.twoDPh":        ["Add more software…", "Weitere Software…"],
+  "f.cad":           ["3D Software", "3D-Software"],
+  "f.cadPh":         ["Add more Software…", "Weitere Software…"],
+  "f.twoD":          ["2D Software", "2D-Software"],
+  "f.twoDPh":        ["Add more Software…", "Weitere Software…"],
+  "f.ai":            ["AI Software", "AI-Software"],
+  "f.aiPh":          ["Add more Software…", "Weitere Software…"],
   "f.optional":      ["optional", "optional"],
-  "f.lead":          ["Team leader / responsible for this team", "Teamleiter / verantwortlich für dieses Team"],
-  "f.leadHelp":      ["Without this check the person is placed as a member below the team leader.", "Ohne diesen Haken wird die Person als Mitglied unter dem Teamleiter eingeordnet."],
+  "f.lead":          ["Team responsible", "Teamverantwortlich"],
+  "f.leadHelp":      ["Without this check the person is placed as a member below the team responsible.", "Ohne diesen Haken wird die Person als Mitglied unter dem Teamverantwortlichen eingeordnet."],
   "f.addTitle":      ["Add", "Hinzufügen"],
 
   "a.title":         ["Admin", "Admin"],
@@ -115,19 +118,21 @@ const STR = {
   "a.noChart2":      ["Add people under “Members” first.", "Zuerst unter „Mitglieder“ Personen erfassen."],
 
   "a.fCat":          ["Category", "Kategorie"],
-  "a.fCad":          ["CAD", "CAD"],
+  "a.fCad":          ["3D", "3D"],
   "a.f2d":           ["2D", "2D"],
+  "a.fAi":           ["AI", "AI"],
   "a.fSearch":       ["Search", "Suche"],
   "a.fSearchPh":     ["Name…", "Name…"],
   "a.fView":         ["View", "Ansicht"],
   "a.fit":           ["Fit", "Einpassen"],
   "a.all":           ["All", "Alle"],
-  "legend.lead":     ["Team leader", "Teamleiter"],
-  "legend.cad":      ["CAD software", "CAD-Software"],
-  "legend.twod":     ["2D software", "2D-Software"],
+  "legend.lead":     ["Team responsible", "Teamverantwortlich"],
+  "legend.cad":      ["3D Software", "3D-Software"],
+  "legend.twod":     ["2D Software", "2D-Software"],
+  "legend.ai":       ["AI Software", "AI-Software"],
   "legend.lang":     ["Languages", "Sprachen"],
-  "chart.sub":       ["ORGANISATION CHART · DESIGN DEPARTMENT", "ORGANIGRAMM · DESIGN-ABTEILUNG"],
-  "chart.role":      ["Team leader", "Teamleiter"],
+  "chart.sub":       ["ORGANISATION CHART · DESIGN", "ORGANIGRAMM · DESIGN"],
+  "chart.role":      ["Team responsible", "Teamverantwortlich"],
   "chart.noCat":     ["Special projects", "Sonderprojekte"],
 
   "a.autosaveTag":   ["Autosave", "Autosave"],
@@ -135,6 +140,10 @@ const STR = {
   "a.lastSaved":     ["Last saved: {time}", "Zuletzt gespeichert: {time}"],
   "a.storageWarnTag":["No storage", "Kein Speicher"],
   "a.storageWarnText":["This browser blocks local storage (private mode?). Entries live only until the tab closes — export a JSON backup regularly.","Dieser Browser blockiert den lokalen Speicher (privater Modus?). Einträge bestehen nur bis zum Schließen des Tabs — bitte regelmäßig ein JSON-Backup exportieren."],
+  /* Getrennt vom Fall oben: hier ist Speicher grundsaetzlich da, aber voll.
+     Andere Ursache, andere Abhilfe – deshalb ein eigener Text. */
+  "a.quotaTag":      ["Storage full", "Speicher voll"],
+  "a.quotaText":     ["The storage on this iPad is full — the last entries could NOT be saved. Export a JSON backup now, then delete old restore points or suppliers you no longer need.","Der Speicher dieses iPads ist voll — die letzten Eingaben konnten NICHT gespeichert werden. Jetzt eine JSON-Sicherung exportieren, danach alte Wiederherstellungspunkte oder nicht mehr benötigte Lieferanten löschen."],
 
   "a.export":        ["Export", "Export"],
   "a.excelT":        ["Excel workbook", "Excel-Arbeitsmappe"],
@@ -187,6 +196,9 @@ const STR = {
   "c.delSupT":       ["Delete supplier", "Lieferant löschen"],
   "c.delSupX":       ["Delete “{name}” including all {n} people? This cannot be undone.", "„{name}“ samt aller {n} Personen löschen? Das kann nicht rückgängig gemacht werden."],
   "c.renameT":       ["Rename supplier", "Lieferant umbenennen"],
+  "c.mergeT":        ["Supplier already exists", "Lieferant existiert bereits"],
+  "c.mergeX":        ["Already on this iPad: {names}. Merge the file into these existing entries? People who are already there stay untouched, only new ones are added. Cancel imports nothing.","Schon auf diesem iPad vorhanden: {names}. Die Datei in diese bestehenden Einträge zusammenführen? Bereits vorhandene Personen bleiben unverändert, nur neue kommen hinzu. Abbrechen importiert nichts."],
+  "c.mergeB":        ["Merge", "Zusammenführen"],
   "c.wipeT":         ["Reset app", "App zurücksetzen"],
   "c.wipeX":         ["Really delete all suppliers and people from this iPad?", "Wirklich alle Lieferanten und Personen von diesem iPad löschen?"],
 
@@ -209,6 +221,8 @@ const STR = {
   "t.impFail":       ["Could not read the file.", "Die Datei konnte nicht gelesen werden."],
   "t.impExcelOk":    ["{n} people imported from Excel ({s} supplier(s)).", "{n} Personen aus Excel importiert ({s} Lieferant(en))."],
   "t.impExcelNone":  ["No usable rows found.", "Keine verwertbaren Zeilen gefunden."],
+  "t.impMerged":     ["Merged: {added} people added, {skipped} already present.", "Zusammengeführt: {added} Personen ergänzt, {skipped} waren schon vorhanden."],
+  "t.impCancelled":  ["Import cancelled — nothing changed.", "Import abgebrochen — nichts geändert."],
   "t.xlsxMissing":   ["Excel library not available.", "Excel-Bibliothek nicht verfügbar."],
   "t.snapOk":        ["State restored.", "Stand wiederhergestellt."],
   "t.wiped":         ["App reset.", "App zurückgesetzt."],
@@ -218,10 +232,11 @@ const STR = {
   "x.name":          ["Name", "Name"],
   "x.email":         ["Email", "E-Mail"],
   "x.phone":         ["Phone / Mobile", "Telefon / Mobil"],
-  "x.lead":          ["Team leader", "Teamleiter"],
+  "x.lead":          ["Team responsible", "Teamverantwortlich"],
   "x.cats":          ["Categories", "Kategorien"],
-  "x.cad":           ["CAD software", "CAD-Software"],
-  "x.twoD":          ["2D software", "2D-Software"],
+  "x.cad":           ["3D Software", "3D-Software"],
+  "x.twoD":          ["2D Software", "2D-Software"],
+  "x.ai":            ["AI Software", "AI-Software"],
   "x.langs":         ["Languages", "Sprachen"],
   "x.yes":           ["Yes", "Ja"],
   "x.allSuppliers":  ["All suppliers", "Alle Lieferanten"]
@@ -254,6 +269,7 @@ function defaultStore() {
     availableCategories: [...DEFAULT_CATEGORIES],
     availableCad: [...DEFAULT_CAD],
     available2d: [...DEFAULT_2D],
+    availableAi: [...DEFAULT_AI],
     availableLanguages: [...DEFAULT_LANGUAGES],
     suppliers: [],
     currentSupplierId: null,
@@ -264,6 +280,7 @@ function defaultStore() {
 
 let store = defaultStore();
 let storageOK = true;
+let storageFail = "blocked";   // blocked = privater Modus | quota = Speicher voll
 let lastSavedAt = null;
 let swState = "off";     // off | pending | ready | error
 let swError = "";
@@ -287,6 +304,10 @@ function loadState() {
     if (!d || !Array.isArray(d.suppliers)) return;
     store = Object.assign(defaultStore(), d);
     store.settings = Object.assign(defaultStore().settings, d.settings || {});
+    // Migration: Staende vor dem AI-Feld haben keinen availableAi-Pool. Object.assign
+    // laesst den Default stehen, ein explizit leeres Array im Altstand aber nicht –
+    // deshalb hier noch einmal absichern.
+    if (!Array.isArray(store.availableAi) || !store.availableAi.length) store.availableAi = [...DEFAULT_AI];
     store.suppliers = d.suppliers.map(s => ({
       id: s.id || uid("sup"),
       name: s.name || "",
@@ -305,7 +326,15 @@ function saveState(immediate) {
   const run = () => {
     store.savedAt = new Date().toISOString();
     const ok = lsSet(LS_KEY, JSON.stringify(store));
-    if (ok) { lastSavedAt = store.savedAt; renderSaveInfo(); }
+    if (ok) { lastSavedAt = store.savedAt; renderSaveInfo(); return; }
+    // Schreiben fehlgeschlagen. Das darf NICHT still bleiben: sonst tippt man
+    // weiter und haelt den Stand fuer gesichert, waehrend nur noch der
+    // Zeitstempel oben stehen bleibt. probeStorage() hat beim Start funktioniert,
+    // also ist Speicher grundsaetzlich da und jetzt voll – eigener Text dafuer.
+    storageOK = false;
+    storageFail = "quota";
+    renderSaveInfo();
+    if (!saveState._warned) { saveState._warned = true; toast(t("a.quotaText")); }
   };
   if (immediate) run(); else _saveT = setTimeout(run, 250);
 }
@@ -322,6 +351,7 @@ function addSnapshot(kind) {
     availableCategories: store.availableCategories,
     availableCad: store.availableCad,
     available2d: store.available2d,
+    availableAi: store.availableAi,
     availableLanguages: store.availableLanguages,
     suppliers: store.suppliers
   });
@@ -347,6 +377,7 @@ function restoreSnapshot(i) {
       store.availableCategories = d.availableCategories || [...DEFAULT_CATEGORIES];
       store.availableCad        = d.availableCad || [...DEFAULT_CAD];
       store.available2d         = d.available2d || [...DEFAULT_2D];
+      store.availableAi         = d.availableAi || [...DEFAULT_AI];
       store.availableLanguages  = d.availableLanguages || [...DEFAULT_LANGUAGES];
       store.suppliers           = (d.suppliers || []).map(x => ({ id: x.id, name: x.name, employees: (x.employees || []).map(normEmp) }));
       store.currentSupplierId   = store.suppliers[0] ? store.suppliers[0].id : null;
@@ -377,7 +408,16 @@ function uid(prefix) {
 }
 function curSup() { return store.suppliers.find(s => s.id === store.currentSupplierId) || null; }
 function nameOr(n) { n = (n || "").trim(); return n === "" ? "—" : n; }
-function slug(s) { return (s || "supplier").replace(/[^\w\-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "supplier"; }
+/* Dateinamen-Baustein. \p{L}/\p{N} statt \w, weil \w nur ASCII kennt: ein
+   chinesischer Firmenname wurde dadurch komplett weggestrippt und alle
+   Exportdateien hiessen gleich ("supplier"), also ueberschrieben sich. */
+function slug(s) {
+  const base = (s || "").normalize("NFC")
+    .replace(/[^\p{L}\p{N}_-]+/gu, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+  return base || "supplier";
+}
 function fmtTime(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -396,15 +436,20 @@ function toast(msg) {
 }
 
 /* ---- Modal statt confirm()/prompt() ---- */
-let _modalOk = null;
-function closeModal() { $("modal").classList.add("hidden"); _modalOk = null; }
-function confirmSheet(title, text, onOk, okLabel) {
+let _modalOk = null, _modalCancel = null;
+function closeModal() { $("modal").classList.add("hidden"); _modalOk = null; _modalCancel = null; }
+/* Abbrechen soll beim Import eine Rueckmeldung geben koennen ("nichts geaendert"),
+   deshalb ein optionaler onCancel. closeModal loescht beide Callbacks, damit der
+   OK-Weg nicht zusaetzlich den Cancel-Weg ausloest. */
+function cancelModal() { const c = _modalCancel; closeModal(); if (c) c(); }
+function confirmSheet(title, text, onOk, okLabel, onCancel) {
   $("modalTitle").textContent = title;
   $("modalText").textContent = text;
   $("modalInputWrap").classList.add("hidden");
   $("modalOk").textContent = okLabel || t("btn.ok");
   $("modalCancel").textContent = t("btn.cancel");
   _modalOk = () => { closeModal(); onOk(); };
+  _modalCancel = onCancel || null;
   $("modal").classList.remove("hidden");
 }
 function promptSheet(title, value, onOk) {
@@ -415,10 +460,11 @@ function promptSheet(title, value, onOk) {
   $("modalOk").textContent = t("btn.save");
   $("modalCancel").textContent = t("btn.cancel");
   _modalOk = () => { const v = $("modalInput").value; closeModal(); onOk(v); };
+  _modalCancel = null;
   $("modal").classList.remove("hidden");
   setTimeout(() => $("modalInput").focus(), 60);
 }
-$("modalCancel").onclick = closeModal;
+$("modalCancel").onclick = cancelModal;
 $("modalOk").onclick = () => { if (_modalOk) _modalOk(); };
 $("modalInput").addEventListener("keydown", e => { if (e.key === "Enter" && _modalOk) _modalOk(); });
 
@@ -454,6 +500,8 @@ function normEmp(x) {
     categories: Array.isArray(x.categories) ? x.categories : [],
     cad: Array.isArray(x.cad) ? x.cad : [],
     twoD: Array.isArray(x.twoD) ? x.twoD : [],
+    // Datensaetze aus der Zeit vor dem AI-Feld bekommen eine leere Liste
+    ai: Array.isArray(x.ai) ? x.ai : [],
     languages: langs,
     isLead: !!x.isLead,
     id: x.id || uid("emp")
@@ -462,14 +510,15 @@ function normEmp(x) {
 function cleanEmp(supId) {
   return e => ({
     name: e.name, email: e.email || "", phone: e.phone || "",
-    categories: e.categories || [], cad: e.cad || [], twoD: e.twoD || [],
+    categories: e.categories || [], cad: e.cad || [], twoD: e.twoD || [], ai: e.ai || [],
     languages: e.languages || [], isLead: !!e.isLead, supplierId: supId, id: e.id
   });
 }
-function mergePools(cats, cads, twoDs, langs) {
+function mergePools(cats, cads, twoDs, ais, langs) {
   (cats || []).forEach(c => { if (c && !store.availableCategories.includes(c)) store.availableCategories.push(c); });
   (cads || []).forEach(c => { if (c && !store.availableCad.includes(c)) store.availableCad.push(c); });
   (twoDs || []).forEach(c => { if (c && !store.available2d.includes(c)) store.available2d.push(c); });
+  (ais || []).forEach(c => { if (c && !store.availableAi.includes(c)) store.availableAi.push(c); });
   (langs || []).forEach(c => { if (c && !store.availableLanguages.includes(c)) store.availableLanguages.push(c); });
 }
 
@@ -478,7 +527,7 @@ function mergePools(cats, cads, twoDs, langs) {
    ============================================================ */
 
 function blankDraft() {
-  return { name: "", email: "", phone: "", categories: [], cad: [], twoD: [], languages: [], isLead: false };
+  return { name: "", email: "", phone: "", categories: [], cad: [], twoD: [], ai: [], languages: [], isLead: false };
 }
 let draft = blankDraft();
 let editingId = null;
@@ -548,7 +597,8 @@ function buildMemberForm() {
     pillGroup("f.cats",  "f.catsPh",  "availableCategories", "categories", ""),
     pillGroup("f.langs", "f.langsPh", "availableLanguages",  "languages",  ""),
     pillGroup("f.cad",   "f.cadPh",   "availableCad",        "cad",        "cad"),
-    pillGroup("f.twoD",  "f.twoDPh",  "available2d",         "twoD",       "twod")
+    pillGroup("f.twoD",  "f.twoDPh",  "available2d",         "twoD",       "twod"),
+    pillGroup("f.ai",    "f.aiPh",    "availableAi",         "ai",         "ai")
   ];
 
   const lead = el("div", "lead-box");
@@ -633,20 +683,20 @@ function validateDraft() {
 }
 
 function commitDraft(sup) {
-  mergePools(draft.categories, draft.cad, draft.twoD, draft.languages);
+  mergePools(draft.categories, draft.cad, draft.twoD, draft.ai, draft.languages);
   const existing = editingId ? sup.employees.find(x => x.id === editingId) : null;
   if (existing) {
     Object.assign(existing, {
       name: draft.name, email: draft.email, phone: draft.phone,
       categories: [...draft.categories], cad: [...draft.cad], twoD: [...draft.twoD],
-      languages: [...draft.languages], isLead: draft.isLead
+      ai: [...draft.ai], languages: [...draft.languages], isLead: draft.isLead
     });
     return { emp: existing, isNew: false };
   }
   const emp = {
     name: draft.name, email: draft.email, phone: draft.phone,
     categories: [...draft.categories], cad: [...draft.cad], twoD: [...draft.twoD],
-    languages: [...draft.languages], isLead: draft.isLead, id: uid("emp")
+    ai: [...draft.ai], languages: [...draft.languages], isLead: draft.isLead, id: uid("emp")
   };
   sup.employees.push(emp);
   return { emp, isNew: true };
@@ -768,6 +818,7 @@ function memberCard(emp, editable) {
   (emp.categories || []).forEach(v => tags.appendChild(el("span", "tag cat", v)));
   (emp.cad || []).forEach(v => tags.appendChild(el("span", "tag cad", v)));
   (emp.twoD || []).forEach(v => tags.appendChild(el("span", "tag twod", v)));
+  (emp.ai || []).forEach(v => tags.appendChild(el("span", "tag ai", v)));
   if (tags.childNodes.length) main.appendChild(tags);
   row.appendChild(main);
   if (editable) {
@@ -834,7 +885,7 @@ function startEdit(id, from) {
   draft = {
     name: e.name || "", email: e.email || "", phone: e.phone || "",
     categories: [...(e.categories || [])], cad: [...(e.cad || [])], twoD: [...(e.twoD || [])],
-    languages: [...(e.languages || [])], isLead: !!e.isLead
+    ai: [...(e.ai || [])], languages: [...(e.languages || [])], isLead: !!e.isLead
   };
   if (from === "kiosk") {
     renderKiosk();
@@ -916,6 +967,10 @@ function renderSaveInfo() {
   $("lastSaved").textContent = lastSavedAt ? t("a.lastSaved", { time: fmtTime(lastSavedAt) }) : "";
   $("storageWarn").classList.toggle("hidden", storageOK);
   $("saveInfo").classList.toggle("hidden", !storageOK);
+  // Zwei verschiedene Ursachen, zwei verschiedene Texte – wie bei swWarn
+  const quota = storageFail === "quota";
+  $("storageWarnTag").textContent  = t(quota ? "a.quotaTag" : "a.storageWarnTag");
+  $("storageWarnText").textContent = t(quota ? "a.quotaText" : "a.storageWarnText");
 }
 
 function renderSupplierBar() {
@@ -1126,7 +1181,7 @@ function pinKey(k) {
    8. Organigramm
    ============================================================ */
 
-const filters = { cat: "", cad: "", twoD: "", search: "" };
+const filters = { cat: "", cad: "", twoD: "", ai: "", search: "" };
 let fitMode = true, currentScale = 1;
 
 const AVATAR = '<svg class="avatar" viewBox="0 0 64 64"><circle cx="32" cy="32" r="31" fill="#d4d4d4"/><circle cx="32" cy="25" r="11" fill="#f5f5f5"/><path d="M13 53c2.5-11 10-16.5 19-16.5S48.5 42 51 53z" fill="#f5f5f5"/></svg>';
@@ -1147,12 +1202,14 @@ function renderFilters() {
   fillSelect($("filterCat"), store.availableCategories, filters.cat);
   fillSelect($("filterCad"), store.availableCad, filters.cad);
   fillSelect($("filter2d"), store.available2d, filters.twoD);
+  fillSelect($("filterAi"), store.availableAi, filters.ai);
   $("filterSearch").value = filters.search;
 }
 function matchesFilter(emp) {
   if (filters.cat && !(emp.categories || []).includes(filters.cat)) return false;
   if (filters.cad && !(emp.cad || []).includes(filters.cad)) return false;
   if (filters.twoD && !(emp.twoD || []).includes(filters.twoD)) return false;
+  if (filters.ai && !(emp.ai || []).includes(filters.ai)) return false;
   if (filters.search && !nameOr(emp.name).toLowerCase().includes(filters.search.toLowerCase())) return false;
   return true;
 }
@@ -1177,6 +1234,11 @@ function empNode(emp, isRoot, active) {
   if ((emp.twoD || []).length) {
     const r = el("div", "frow");
     r.appendChild(fbox("twod", emp.twoD.join(" · ")));
+    f.appendChild(r);
+  }
+  if ((emp.ai || []).length) {
+    const r = el("div", "frow");
+    r.appendChild(fbox("ai", emp.ai.join(" · ")));
     f.appendChild(r);
   }
   if ((emp.languages || []).length) {
@@ -1207,9 +1269,9 @@ function primaryCategory(emp) {
 function buildGroups(sorted, lead) {
   const map = new Map();
   sorted.forEach(e => {
-    if (lead && e.id === lead.id) return;          // Teamleiter ist die Wurzel
+    if (lead && e.id === lead.id) return;          // Teamverantwortlicher ist die Wurzel
     const cat = primaryCategory(e);
-    const key = cat || " nocat";
+    const key = cat || "_nocat";
     if (!map.has(key)) map.set(key, { label: cat || t("chart.noCat"), isOther: !cat, members: [] });
     map.get(key).members.push(e);
   });
@@ -1247,7 +1309,7 @@ function renderChart() {
     return;
   }
 
-  const active = !!(filters.cat || filters.cad || filters.twoD || filters.search);
+  const active = !!(filters.cat || filters.cad || filters.twoD || filters.ai || filters.search);
   const sorted = sortedEmployees(sup);
   const lead = sorted.find(e => e.isLead) || null;
 
@@ -1448,13 +1510,13 @@ function setScale(v) { fitMode = false; currentScale = Math.max(0.15, Math.min(2
 function empRow(e) {
   return [nameOr(e.name), e.email || "", e.phone || "", e.isLead ? t("x.yes") : "",
     (e.categories || []).join(", "), (e.cad || []).join(", "),
-    (e.twoD || []).join(", "), (e.languages || []).join(", ")];
+    (e.twoD || []).join(", "), (e.ai || []).join(", "), (e.languages || []).join(", ")];
 }
 
 async function exportExcel() {
   if (!store.suppliers.length) { toast(t("t.noData")); return; }
   const headAll = [t("x.supplier"), t("x.name"), t("x.email"), t("x.phone"), t("x.lead"),
-                   t("x.cats"), t("x.cad"), t("x.twoD"), t("x.langs")];
+                   t("x.cats"), t("x.cad"), t("x.twoD"), t("x.ai"), t("x.langs")];
   const headSup = headAll.slice(1);
   const rowsAll = [headAll];
   const perSup = [];
@@ -1471,7 +1533,7 @@ async function exportExcel() {
   if (typeof XLSX !== "undefined") {
     const wb = XLSX.utils.book_new();
     const wsAll = XLSX.utils.aoa_to_sheet(rowsAll);
-    wsAll["!cols"] = [{ wch: 22 }, { wch: 20 }, { wch: 26 }, { wch: 20 }, { wch: 11 }, { wch: 26 }, { wch: 22 }, { wch: 22 }, { wch: 16 }];
+    wsAll["!cols"] = [{ wch: 22 }, { wch: 20 }, { wch: 26 }, { wch: 20 }, { wch: 16 }, { wch: 26 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 16 }];
     XLSX.utils.book_append_sheet(wb, wsAll, t("x.allSuppliers").slice(0, 31));
     const used = new Set([t("x.allSuppliers").slice(0, 31).toLowerCase()]);
     perSup.forEach((s, i) => {
@@ -1481,7 +1543,7 @@ async function exportExcel() {
       while (used.has(nm.toLowerCase())) { nm = base + " " + k; k++; }
       used.add(nm.toLowerCase());
       const ws = XLSX.utils.aoa_to_sheet(s.rows);
-      ws["!cols"] = [{ wch: 20 }, { wch: 26 }, { wch: 20 }, { wch: 11 }, { wch: 26 }, { wch: 22 }, { wch: 22 }, { wch: 16 }];
+      ws["!cols"] = [{ wch: 20 }, { wch: 26 }, { wch: 20 }, { wch: 16 }, { wch: 26 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 16 }];
       XLSX.utils.book_append_sheet(wb, ws, nm);
     });
     const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
@@ -1510,6 +1572,7 @@ async function saveJson(onlyCurrent) {
       availableCategories: store.availableCategories,
       availableCad: store.availableCad,
       available2d: store.available2d,
+      availableAi: store.availableAi,
       availableLanguages: store.availableLanguages
     };
     filename = "supplier-" + slug(sup.name) + ".json";
@@ -1519,6 +1582,7 @@ async function saveJson(onlyCurrent) {
       availableCategories: store.availableCategories,
       availableCad: store.availableCad,
       available2d: store.available2d,
+      availableAi: store.availableAi,
       availableLanguages: store.availableLanguages,
       suppliers: store.suppliers.map(s => ({ id: s.id, name: s.name, employees: s.employees.map(cleanEmp(s.id)) }))
     };
@@ -1548,6 +1612,11 @@ async function exportPdf() {
   }
   const prevTransform = target.style.transform;
   target.style.transform = "none";
+  // Aktive Filter blenden Nichttreffer auf 26 % ab. Die Print-Regel in app.css
+  // hebt das auf, der html2canvas-Pfad nicht – sonst stehen im PDF halb
+  // durchsichtige Personen. Fuer die Aufnahme kurz alle Knoten voll zeigen.
+  const dimmed = Array.from(target.querySelectorAll(".onode.dim"));
+  dimmed.forEach(n => n.classList.remove("dim"));
   drawConnectors();
   const w = target.scrollWidth, h = target.scrollHeight;
   // iPad-Canvas-Limit respektieren (ca. 16 Mio. Pixel), sonst kommt ein leeres Bild
@@ -1569,37 +1638,90 @@ async function exportPdf() {
     toast(t("t.pdfFail"));
     setTimeout(() => window.print(), 250);
   } finally {
+    dimmed.forEach(n => n.classList.add("dim"));
     target.style.transform = prevTransform;
     applyZoom();
   }
 }
 
+/* ---- Import: Zusammenfuehren statt blind anlegen ----
+   Dieselbe Datei zweimal einzulesen war der einfachste Weg, sich den ganzen
+   Bestand zu verdoppeln – es wurde immer ein neuer Lieferant angelegt. Bei
+   Namensgleichheit wird jetzt gefragt; Personen werden ueber Name + E-Mail
+   wiedererkannt und nicht doppelt eingetragen. */
+function supKey(name) { return (name || "").trim().toLowerCase(); }
+function findSupByName(name) {
+  const k = supKey(name);
+  return k ? (store.suppliers.find(s => supKey(s.name) === k) || null) : null;
+}
+function empKey(e) {
+  return (e.name || "").trim().toLowerCase() + "|" + (e.email || "").trim().toLowerCase();
+}
+function mergeEmployees(sup, incoming) {
+  const seen = new Set(sup.employees.map(empKey));
+  let added = 0, skipped = 0;
+  incoming.forEach(e => {
+    const k = empKey(e);
+    if (seen.has(k)) { skipped++; return; }
+    seen.add(k);
+    sup.employees.push(e);
+    added++;
+  });
+  return { added, skipped };
+}
+/* Uebernimmt die eingelesenen Lieferanten. merge=true fuehrt bei gleichem
+   Namen zusammen, merge=false legt sie wie bisher als eigene Eintraege an. */
+function applyImportedSuppliers(list, merge) {
+  let added = 0, skipped = 0, lastId = null;
+  list.forEach(s => {
+    const hit = merge ? findSupByName(s.name) : null;
+    if (hit) {
+      const r = mergeEmployees(hit, s.employees);
+      added += r.added; skipped += r.skipped;
+      lastId = hit.id;
+    } else {
+      const id = (!s.id || store.suppliers.some(x => x.id === s.id)) ? uid("sup") : s.id;
+      store.suppliers.push({ id, name: s.name || "", employees: s.employees });
+      added += s.employees.length;
+      lastId = id;
+    }
+  });
+  if (lastId) store.currentSupplierId = lastId;
+  return { added, skipped };
+}
+/* Fragt nur nach, wenn es wirklich Namensdubletten gibt. */
+function confirmImport(list, onGo, onCancel) {
+  const clashes = list.map(s => nameOr(s.name)).filter(n => findSupByName(n));
+  if (!clashes.length) { onGo(false); return; }
+  confirmSheet(t("c.mergeT"), t("c.mergeX", { names: clashes.join(", ") }),
+    () => onGo(true), t("c.mergeB"), onCancel);
+}
+
 function importJsonFile(file) {
   const r = new FileReader();
   r.onload = () => {
+    let list, pools;
     try {
       const d = JSON.parse(r.result);
-      addSnapshot("import");
       if (d.type === "supplier-workspace" && Array.isArray(d.suppliers)) {
-        mergePools(d.availableCategories, d.availableCad, d.available2d, d.availableLanguages);
-        d.suppliers.forEach(s => store.suppliers.push({
-          id: store.suppliers.some(x => x.id === s.id) ? uid("sup") : (s.id || uid("sup")),
-          name: s.name || "",
-          employees: (s.employees || []).map(normEmp)
-        }));
-        store.currentSupplierId = store.suppliers[store.suppliers.length - 1].id;
-        toast(t("t.impOk", { n: d.suppliers.length }));
+        list = d.suppliers.map(s => ({ id: s.id, name: s.name || "", employees: (s.employees || []).map(normEmp) }));
       } else if (d.supplier && Array.isArray(d.employees)) {
-        mergePools(d.availableCategories, d.availableCad, d.available2d, d.availableLanguages);
-        const id = store.suppliers.some(x => x.id === d.supplier.id) ? uid("sup") : (d.supplier.id || uid("sup"));
-        store.suppliers.push({ id, name: d.supplier.name || "", employees: d.employees.map(normEmp) });
-        store.currentSupplierId = id;
-        toast(t("t.impOne", { name: nameOr(d.supplier.name) }));
+        list = [{ id: d.supplier.id, name: d.supplier.name || "", employees: d.employees.map(normEmp) }];
       } else throw new Error("format");
+      pools = d;
+    } catch (e) { toast(t("t.impFail")); return; }
+
+    confirmImport(list, merge => {
+      addSnapshot("import");
+      mergePools(pools.availableCategories, pools.availableCad, pools.available2d, pools.availableAi, pools.availableLanguages);
+      const res = applyImportedSuppliers(list, merge);
       resetDraft();
       saveState(true);
       renderAll();
-    } catch (e) { toast(t("t.impFail")); }
+      if (merge) toast(t("t.impMerged", res));
+      else if (list.length === 1) toast(t("t.impOne", { name: nameOr(list[0].name) }));
+      else toast(t("t.impOk", { n: list.length }));
+    }, () => toast(t("t.impCancelled")));
   };
   r.readAsText(file);
 }
@@ -1631,10 +1753,13 @@ function importExcelFile(file) {
           name: col(["name"]),
           email: col(["e-mail", "email", "mail"]),
           phone: col(["phone / mobile", "telefon / mobil", "telefon", "mobil", "phone", "tel", "mobile", "firmen-telefon", "firmen telefon"]),
-          lead: col(["teamleiter", "lead", "team leader"]),
-          cat:  col(["kategorien", "kategorie", "categories", "category"]),
-          cad:  col(["cad-software", "cad", "cad software"]),
+          // Alte Spaltenkoepfe bleiben gueltig, damit vor der Umbenennung
+          // exportierte Dateien weiter einlesbar sind.
+          lead: col(["teamverantwortlich", "team responsible", "teamleiter", "lead", "team leader"]),
+          cat:  col(["kern-kategorien", "core categories", "kategorien", "kategorie", "categories", "category"]),
+          cad:  col(["3d-software", "3d software", "3d", "cad-software", "cad", "cad software"]),
           twoD: col(["2d-software", "2d", "2d software", "twod"]),
+          ai:   col(["ai-software", "ai software", "ai", "ki-software", "ki software", "ki"]),
           lang: col(["sprachen", "sprache", "languages", "language"]),
           en:   col(["englisch", "english", "en"])
         };
@@ -1652,6 +1777,7 @@ function importExcelFile(file) {
             categories: ci.cat >= 0 ? splitList(row[ci.cat]) : [],
             cad: ci.cad >= 0 ? splitList(row[ci.cad]) : [],
             twoD: ci.twoD >= 0 ? splitList(row[ci.twoD]) : [],
+            ai: ci.ai >= 0 ? splitList(row[ci.ai]) : [],
             languages,
             isLead: ci.lead >= 0 ? truthy(row[ci.lead]) : false
           });
@@ -1661,22 +1787,20 @@ function importExcelFile(file) {
 
       const supNames = Object.keys(groups);
       if (!supNames.length) { toast(t("t.impExcelNone")); return; }
-      addSnapshot("import");
-      let lastId = null;
-      supNames.forEach(supName => {
-        const id = uid("sup");
-        const emps = groups[supName].map(e => {
-          mergePools(e.categories, e.cad, e.twoD, e.languages);
-          return normEmp(e);
-        });
-        store.suppliers.push({ id, name: supName, employees: emps });
-        lastId = id;
-      });
-      store.currentSupplierId = lastId;
-      resetDraft();
-      saveState(true);
-      renderAll();
-      toast(t("t.impExcelOk", { n: count, s: supNames.length }));
+      const list = supNames.map(supName => ({
+        id: null, name: supName, employees: groups[supName].map(normEmp)
+      }));
+
+      confirmImport(list, merge => {
+        addSnapshot("import");
+        // Pools erst hier fuellen – bei Abbruch soll die Datei keine Spur hinterlassen
+        list.forEach(s => s.employees.forEach(e => mergePools(e.categories, e.cad, e.twoD, e.ai, e.languages)));
+        const res = applyImportedSuppliers(list, merge);
+        resetDraft();
+        saveState(true);
+        renderAll();
+        toast(merge ? t("t.impMerged", res) : t("t.impExcelOk", { n: count, s: supNames.length }));
+      }, () => toast(t("t.impCancelled")));
     } catch (err) { toast(t("t.impFail")); }
   };
   r.readAsArrayBuffer(file);
@@ -1786,6 +1910,7 @@ $("excelInput").onchange = e => { const f = e.target.files[0]; if (f) importExce
 $("filterCat").onchange = e => { filters.cat = e.target.value; renderChart(); };
 $("filterCad").onchange = e => { filters.cad = e.target.value; renderChart(); };
 $("filter2d").onchange  = e => { filters.twoD = e.target.value; renderChart(); };
+$("filterAi").onchange  = e => { filters.ai = e.target.value; renderChart(); };
 $("filterSearch").oninput = e => { filters.search = e.target.value; renderChart(); };
 $("zoomIn").onclick  = () => setScale(currentScale + 0.1);
 $("zoomOut").onclick = () => setScale(currentScale - 0.1);

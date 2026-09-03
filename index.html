@@ -97,9 +97,11 @@
 
   <div class="scrollarea a-body">
     <div class="a-inner">
+      <!-- Text kommt aus renderSaveInfo(): "Kein Speicher" (privater Modus)
+           und "Speicher voll" sind zwei verschiedene Faelle. -->
       <div class="notice bad hidden" id="storageWarn">
-        <b data-i18n="a.storageWarnTag">No storage</b>
-        <span data-i18n="a.storageWarnText">This browser blocks local storage (private mode?). Entries live only until the tab closes — export a JSON backup regularly.</span>
+        <b id="storageWarnTag"></b>
+        <span id="storageWarnText"></span>
       </div>
       <div class="notice bad hidden" id="swWarn">
         <b data-i18n="a.swWarnTag">Not offline</b>
@@ -151,8 +153,9 @@
       <div id="adminChart" class="hidden">
         <div class="card filterbar">
           <div class="fl"><span class="lbl" data-i18n="a.fCat">Category</span><select id="filterCat"></select></div>
-          <div class="fl"><span class="lbl" data-i18n="a.fCad">CAD</span><select id="filterCad"></select></div>
+          <div class="fl"><span class="lbl" data-i18n="a.fCad">3D</span><select id="filterCad"></select></div>
           <div class="fl"><span class="lbl" data-i18n="a.f2d">2D</span><select id="filter2d"></select></div>
+          <div class="fl"><span class="lbl" data-i18n="a.fAi">AI</span><select id="filterAi"></select></div>
           <div class="fl"><span class="lbl" data-i18n="a.fSearch">Search</span><input type="search" id="filterSearch" data-i18n-ph="a.fSearchPh" placeholder="Name…" /></div>
           <div class="fl zoomctl">
             <span class="lbl" data-i18n="a.fView">View</span>
@@ -166,9 +169,10 @@
         </div>
         <div class="card filterbar" style="padding:12px 16px">
           <div class="legend">
-            <span><i class="sq lead"></i> <span data-i18n="legend.lead">Team leader</span></span>
-            <span><i class="sq cad"></i> <span data-i18n="legend.cad">CAD software</span></span>
-            <span><i class="sq twod"></i> <span data-i18n="legend.twod">2D software</span></span>
+            <span><i class="sq lead"></i> <span data-i18n="legend.lead">Team responsible</span></span>
+            <span><i class="sq cad"></i> <span data-i18n="legend.cad">3D Software</span></span>
+            <span><i class="sq twod"></i> <span data-i18n="legend.twod">2D Software</span></span>
+            <span><i class="sq ai"></i> <span data-i18n="legend.ai">AI Software</span></span>
             <span><i class="sq lang"></i> <span data-i18n="legend.lang">Languages</span></span>
           </div>
         </div>
@@ -183,7 +187,7 @@
               <svg viewBox="0 0 48 28"><rect x="3" y="3" width="42" height="22" rx="11" fill="none" stroke="#000" stroke-width="4"/></svg>
             </div>
           </div>
-          <div class="org-sub" id="orgSub">ORGANISATION CHART · DESIGN DEPARTMENT</div>
+          <div class="org-sub" id="orgSub">ORGANISATION CHART · DESIGN</div>
           <div class="org-rule"></div>
           <div class="chart-scroll" id="chartScroll">
             <div class="chart-stage" id="chartStage">
