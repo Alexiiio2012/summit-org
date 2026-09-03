@@ -162,10 +162,10 @@ Der Service Worker liefert die Dateien aus seinem Cache aus. Nach einer Änderun
 an `index.html`, `app.css` oder `app.js` deshalb in `sw.js` die Zeile
 
 ```js
-const CACHE = "summit-org-v4";
+const CACHE = "summit-org-v5";
 ```
 
-hochzählen (`v5`, `v6`, …) und die App auf dem iPad zweimal starten. Ohne das
+hochzählen (`v6`, `v7`, …) und die App auf dem iPad zweimal starten. Ohne das
 bleibt die alte Version aktiv.
 
 ---

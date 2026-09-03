@@ -1966,6 +1966,12 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => appl
 storageOK = probeStorage();
 loadState();
 LANG = store.settings.lang === "de" ? "de" : "en";
+/* Jeder Neustart faengt auf der Startseite an. Die Firmenauswahl wird
+   mitgespeichert; ohne das Zuruecksetzen landet die naechste Person direkt im
+   Formular der vorherigen Firma – auch nach einem Reload durch iOS. Im
+   Kiosk-Modus "Fest" bleibt der eingestellte Lieferant dagegen stehen, das ist
+   dort ja der Zweck. Der Admin holt sich in openAdmin() wieder einen Lieferanten. */
+if (store.settings.kioskMode === "choose") store.currentSupplierId = null;
 addSnapshot("start");
 applyI18n();
 showScreen("kiosk");
